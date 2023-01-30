@@ -30,7 +30,9 @@ int main() {
 	// vytvori kruh na suradnicach
 	cv::circle(frame, cv::Point(target_x, target_y), 50, cv::Scalar(0, 0, 255), -1);
 
+	//ukaze okno uz vyplnene ciernou farbou
 	imshow("oknoo", frame);
+
 	/*
 	while (true) {
 		cv::Mat frame = cv::Mat::zeros(600, 600, CV_8UC3);
