@@ -3,10 +3,11 @@
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>	//pre urèenie polohy myši
+
 using namespace cv;
 using namespace std;
 
-int score, target_x, target_y;
+int score, target_x, target_y; // globálne premenné
 
 // funkcia, ktora checkne èi je stlaèene lave tlaèidlo myši, èi bolo to kliknutie v radiuse a potom pripoèita skore++ a an koniec vytvori novy target
 void onMouse(int event, int x, int y, int flag, void* userdata) {
@@ -25,15 +26,6 @@ void onMouse(int event, int x, int y, int flag, void* userdata) {
 }
 
 int main() {
-
-	/*
-	cout << "Hello world!";
-	
-	Mat image = cv::imread("C:\\Users\\Krivoklatsky\\Pictures\\Einladung.png");
-	resize(image, image, image.size() / 2);
-	imshow("test window", image);
-	*/
-
 	srand(time(0));
 
 	// Vytvori okno
