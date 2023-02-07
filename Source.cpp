@@ -18,14 +18,15 @@ int main() {
 	int win_size = 600;
 	int car_x = win_size/2, car_y = win_size/2;
 
-	int pressed_key = waitKey(0);
 
 	while (true) {
 		Mat keygame_frame = Mat::zeros(win_size, win_size, CV_8UC3);
 		rectangle(keygame_frame, Point(car_x - 10, car_y + 10), Point(car_x + 10, car_y - 10), Scalar(255, 0, 0), -1);
 		imshow("keygame", keygame_frame);
 
+
 		int pressed_key = waitKey(0);
+		
 
 		switch (pressed_key) {
 		case 27: //escape key
@@ -46,6 +47,8 @@ int main() {
 		default:
 			break;
 		}
+
+
 	}
 
 	return 0;
