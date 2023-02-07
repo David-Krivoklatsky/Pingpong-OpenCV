@@ -7,9 +7,12 @@
 using namespace cv;
 using namespace std;
 
+
+
+/*
 int score, target_x, target_y; // glob·lne premennÈ
 
-// funkcia, ktora checkne Ëi je stlaËene lave tlaËidlo myöi, Ëi bolo to kliknutie v radiuse a potom pripoËita skore++ a an koniec vytvori novy target
+// funkcia, ktora checkne Ëi je stlaËene lave tlaËidlo myöi, Ëi bolo to kliknutie v radiuse a potom pripoËita skore++ a na koniec vytvori novy target
 void onMouse(int event, int x, int y, int flag, void* userdata) {
 	if (event == EVENT_LBUTTONDOWN) {
 
@@ -24,16 +27,25 @@ void onMouse(int event, int x, int y, int flag, void* userdata) {
 		}
 	}
 }
+*/
+
+
 
 int main() {
+	//generuje random Ëisla podæa Ëasu
 	srand(time(0));
 
+/*
+
+	//PRVA HRA
+
 	// Vytvori okno
-	namedWindow("oknoo", WindowFlags::WINDOW_NORMAL);
+	namedWindow("clickgame", WINDOW_KEEPRATIO);
 
 	// vygeneruje nahodne suradnice pre kruh
 	target_x = rand() % 500 + 50; // 50 aû 550 px
 	target_y = rand() % 500 + 50; // 50 aû 550 px
+
 
 	while (true) {
 		// nastavi velkost 600x600 px a vyplni Ëiernou (zeros), to posledne neviem co robi
@@ -41,19 +53,60 @@ int main() {
 
 		// ukaûe skore (dalo by sa zv‰Ëöiù keÔ je 3 ciferne Ëislo)
 		putText(frame, "Score: " + to_string(score), Point(440, 40),
-			FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
+		FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
 
 		// vytvori kruh na suradnicach, farba - cervena
 		circle(frame, Point(target_x, target_y), 50, Scalar(0, 0, 255), -1);
 
 		//ukaze okno uz vyplnene ciernou farbou
-		imshow("oknoo", frame);
+		imshow("clickgame", frame);
 
 		// funkcia, ktora zavola funkciu onMouse pre konkretne okno
-		setMouseCallback("oknoo", onMouse);
+		setMouseCallback("clickgame", onMouse);
 	
 		//toto tu musi byù inak to nefunguje, keÔ je tam waitKey(0), tak to Ëaka kym stlaËim nulu
 		waitKey(1);
+	}
+
+*/
+
+	//DRUHA HRA
+
+	namedWindow("keygame", WINDOW_KEEPRATIO);
+
+	int win_size = 600;
+	int car_x = win_size/2, car_y = win_size/2;
+
+	int pressed_key = waitKey(0);
+
+	while (true) {
+		Mat keygame_frame = Mat::zeros(win_size, win_size, CV_8UC3);
+		rectangle(keygame_frame, Point(car_x - 10, car_y + 10), Point(car_x + 10, car_y - 10), Scalar(255, 0, 0), -1);
+		imshow("keygame", keygame_frame);
+
+		int pressed_key = waitKey(0);
+
+		switch (pressed_key) {
+		case 27: //escape key
+			return 0; // exit program
+			break;
+		case 'w':
+			car_y -= 10;
+			break;
+		case 's':
+			car_y += 10;
+			break;
+		case 'a':
+			car_x -= 10;
+			break;
+		case 'd':
+			car_x += 10;
+			break;
+		default:
+			break;
+		}
+
+
 	}
 
 	return 0;
