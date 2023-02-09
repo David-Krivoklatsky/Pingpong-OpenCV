@@ -12,12 +12,10 @@ int main() {
 	//generuje random èisla pod¾a èasu
 	srand(time(0));
 
-
 	namedWindow("keygame", WINDOW_KEEPRATIO);
 
 	int win_size = 600;
 	int car_x = win_size/2, car_y = win_size/2;
-
 
 	while (true) {
 		Mat keygame_frame = Mat::zeros(win_size, win_size, CV_8UC3);
@@ -26,7 +24,6 @@ int main() {
 
 
 		int pressed_key = waitKey(0);
-		
 
 		switch (pressed_key) {
 		case 27: //escape key
@@ -47,8 +44,6 @@ int main() {
 		default:
 			break;
 		}
-
-
 	}
 
 	return 0;
