@@ -12,6 +12,20 @@ int main() {
 	//generuje random èisla pod¾a èasu
 	srand(time(0));
 
+	VideoCapture cap(0);
+
+	if (!cap.isOpened())
+		return 69;
+
+	Mat frame;
+	while (true) {
+		cap >> frame;
+		flip(frame, frame, 1);
+		imshow("Camera", frame);
+		if (waitKey(30) == 27)
+			break;
+	}
+
 	namedWindow("keygame", WINDOW_KEEPRATIO);
 
 	int win_size = 600,
