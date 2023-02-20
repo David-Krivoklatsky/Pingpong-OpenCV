@@ -1,6 +1,7 @@
 #include <iostream>
 #include <ctime>				//pre random èisla generovane na zaklade èasu
 
+#include <opencv2/dnn.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>	//pre urèenie polohy myši
 
@@ -15,17 +16,34 @@ int main() {
 	VideoCapture cap(0);
 
 	if (!cap.isOpened())
-		return 69;
+		return 1;
+
+	//loaduje kaskadu na rozpoznanie tvare
+	CascadeClassifier face_cascade;
+	if (!face_cascade.load("C:\\opencv-4.7.0\\build\\etc\\haarcascades\\haarcascade_frontalface_default.xml")) {
+		cout << "Error loading face cascade\n";
+		return 2;
+	}
 
 	Mat frame;
 	while (true) {
 		cap >> frame;
 		flip(frame, frame, 1);
+
+		vector<Rect> tvare;
+		face_cascade.detectMultiScale(frame, tvare, 2, 5); //tie dva parametre su znizenie kvality a presnost detekcie
+
+		// Draw a bounding box around each detected face
+		for (size_t i = 0; i < tvare.size(); i++) {
+			rectangle(frame, tvare[i], Scalar(0, 255, 0), 2);
+		}
+
 		imshow("Camera", frame);
 		if (waitKey(30) == 27)
 			break;
 	}
 
+/*
 	namedWindow("keygame", WINDOW_KEEPRATIO);
 
 	int win_size = 600,
@@ -80,5 +98,7 @@ int main() {
 			break;
 		}
 	}
+*/
+
 	return 0;
 }
