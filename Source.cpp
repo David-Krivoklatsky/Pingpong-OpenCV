@@ -117,7 +117,7 @@ int main() {
 		imshow("keygame", keygame_frame);
 
 
-		int pressed_key = waitKey(30);
+		int pressed_key = waitKey(1);
 
 		switch (pressed_key) {
 		case 27: //escape key
