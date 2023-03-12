@@ -1,9 +1,9 @@
 #include <iostream>
 #include <ctime>				//pre random èisla generovane na zaklade èasu
 
-#include <opencv2/dnn.hpp>
 #include <opencv2/opencv.hpp>
-#include <opencv2/highgui.hpp>	//pre urèenie polohy myši
+//#include <opencv2/dnn.hpp>
+//#include <opencv2/highgui.hpp>	//pre urèenie polohy myši
 
 using namespace cv;
 using namespace std;
@@ -29,8 +29,8 @@ Ball createBall()
 {
 	Ball ball;
 	ball.size = 10;
-	ball.x = rand() % (WIN_SIZE - ball.size + 1);
-	ball.y = rand() % (WIN_SIZE - ball.size + 1);
+	ball.x = rand() % (WIN_SIZE - 2*ball.size + 1) + ball.size;
+	ball.y = rand() % (WIN_SIZE - 2*ball.size + 1) + ball.size;
 	ball.x_speed = 1 + rand() % 11; //nahodna zmena x o cislo od 1 do 10
 	ball.y_speed = 1 + rand() % 11;
 	return ball;
@@ -93,26 +93,35 @@ int main() {
 
 	namedWindow("keygame", WINDOW_KEEPRATIO);
 
-	Object car{ WIN_SIZE /2, WIN_SIZE /2 };
+	Object sliderL{ 10, WIN_SIZE / 2 };
+	Object sliderR{ WIN_SIZE - 10, WIN_SIZE / 2 };
 
 	Ball ball = createBall();
 
-
+	int loses = 0;
 
 	while (true) {
 		Mat keygame_frame = Mat::zeros(WIN_SIZE, WIN_SIZE, CV_8UC3);
-		rectangle(keygame_frame, Point(car.x - 10, car.y + 10), Point(car.x + 10, car.y - 10), Scalar(255, 0, 0), -1);
 
-			if (ball.x <= ball.size || ball.x >= WIN_SIZE - ball.size) ball.x_speed *= -1; // ak je lopta na kraji okna, odrazi sa
-			if (ball.y <= ball.size || ball.y >= WIN_SIZE - ball.size) ball.y_speed *= -1;
+		rectangle(keygame_frame, Point(sliderL.x - 10, sliderL.y - 100), Point(sliderL.x + 10, sliderL.y + 100), Scalar(255, 0, 0), -1);
+		rectangle(keygame_frame, Point(sliderR.x - 10, sliderR.y - 100), Point(sliderR.x + 10, sliderR.y + 100), Scalar(255, 0, 0), -1);
 
-			ball.x += ball.x_speed; // moze to pricitat aj odcitat
-			ball.y += ball.y_speed; // aj tu, kvoli tomu tam nie je ++
+		if (ball.x <= sliderL.x + 20 && (ball.y >= sliderL.y - 100 && ball.y <= sliderL.y + 100)) ball.x_speed *= -1;
+		if (ball.x >= sliderR.x - 20 && (ball.y >= sliderR.y - 100 && ball.y <= sliderR.y + 100)) ball.x_speed *= -1;
+		if (ball.y <= ball.size || ball.y >= WIN_SIZE - ball.size) ball.y_speed *= -1; // ak je lopta na vrchu/spodu okna, odrazi sa
+		if (ball.x <= ball.size || ball.x >= WIN_SIZE - ball.size) {
+			loses++;
+			ball = createBall();
+		}
 
-			circle(keygame_frame, Point(ball.x, ball.y), ball.size, Scalar(0, 255, 0), 1, 8, 0);
+		ball.x += ball.x_speed; // moze to pricitat aj odcitat
+		ball.y += ball.y_speed; // aj tu, kvoli tomu tam nie je ++
 
-			putText(keygame_frame, "ball x speed: " + to_string(ball.x_speed), Point(5, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
-			putText(keygame_frame, "ball y speed: " + to_string(ball.y_speed), Point(5, 60), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
+		circle(keygame_frame, Point(ball.x, ball.y), ball.size, Scalar(0, 255, 0), 1, 8, 0);
+
+		putText(keygame_frame, "ball x speed: " + to_string(ball.x_speed), Point(5, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
+		putText(keygame_frame, "ball y speed: " + to_string(ball.y_speed), Point(5, 60), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
+		putText(keygame_frame, "Loses: " + to_string(loses), Point(5, 90), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
 
 		imshow("keygame", keygame_frame);
 
@@ -124,16 +133,16 @@ int main() {
 			return 0; // exit program
 			break;
 		case 'w':
-			car.y -= 10;
+			sliderL.y -= 10;
 			break;
 		case 's':
-			car.y += 10;
+			sliderL.y += 10;
 			break;
-		case 'a':
-			car.x -= 10;
+		case '8':
+			sliderR.y -= 10;
 			break;
-		case 'd':
-			car.x += 10;
+		case '5':
+			sliderR.y += 10;
 			break;
 		default:
 			break;
