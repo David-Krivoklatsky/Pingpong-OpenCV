@@ -2,8 +2,6 @@
 #include <ctime>				//pre random èisla generovane na zaklade èasu
 
 #include <opencv2/opencv.hpp>
-//#include <opencv2/dnn.hpp>
-//#include <opencv2/highgui.hpp>	//pre urèenie polohy myši
 
 using namespace cv;
 using namespace std;
