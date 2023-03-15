@@ -68,61 +68,7 @@ Ball createBall(Point2f position)
 }
 
 int main() {
-	//generuje random èisla pod¾a èasu
-	srand(time(0));
-/*
-	VideoCapture cap(0);
-
-	if (!cap.isOpened())
-		return 1;
-
-	//loaduje kaskadu na rozpoznanie tvare
-	CascadeClassifier face_cascade;
-	if (!face_cascade.load("C:\\opencv-4.7.0\\build\\etc\\haarcascades\\haarcascade_frontalface_default.xml")) {
-		cerr << "Error loading face cascade\n";
-		return 2;
-	}
-
-	vector<Rect> tvare;
-	Mat frame;
-	while (true) {
-		cap >> frame;
-		flip(frame, frame, 1);
-
-		vector<Rect> tvare;
-		face_cascade.detectMultiScale(frame, tvare, 2, 5); //tie dva parametre su znizenie kvality a presnost detekcie
-		
-		// Draw a bounding box around each detected face
-		
-		for (const Rect& tvar : tvare) {
-			rectangle(frame, tvar, Scalar(0, 255, 0), 2);
-		}
-		//for (size_t i = 0; i < tvare.size(); i++) {
-		//	rectangle(frame, tvare[i], Scalar(0, 255, 0), 2);
-		//}
-
-		
-
-
-
-
-
-		imshow("Camera", frame);
-		if (waitKey(1) == 27 && !tvare.empty())
-		{
-			for (size_t i = 0; i < tvare.size(); i++)
-			{
-				auto image = frame(tvare[i]);
-				imshow("tvar" + to_string(i), image);
-			}
-
-			//waitKey(0);
-		}
-	}
-*/
-
-
-	namedWindow("keygame", WINDOW_KEEPRATIO);
+	namedWindow("GAME", WINDOW_KEEPRATIO);
 
 	Size res{ 1280, 720 };
 
@@ -131,11 +77,16 @@ int main() {
 	Slider sliderL{ 10, res.height / 2 };
 	Slider sliderR{ res.width - 10, res.height / 2 };
 
-	int loses = 0;
-
 	VideoCapture cam(0);
+
+	if (!cam.isOpened())
+		return 1;
+	
 	cam.set(CAP_PROP_FRAME_WIDTH, 1280);
 	cam.set(CAP_PROP_FRAME_HEIGHT, 720);
+
+	
+	int loses = 0;
 
 	while (true) {
 
@@ -149,16 +100,12 @@ int main() {
 		aruco::ArucoDetector detector(dictionary, detectorParams);
 		detector.detectMarkers(frame, markerCorners, markerIds, rejectedCandidates);
 
-		Mat outputImage = frame.clone();
-		aruco::drawDetectedMarkers(outputImage, markerCorners, markerIds);
-		flip(outputImage, outputImage, 1);
-		imshow("cam", outputImage);
+		aruco::drawDetectedMarkers(frame, markerCorners, markerIds);
 
-		//Mat keygame_frame = Mat::zeros(WIN_SIZE, WIN_SIZE, CV_8UC3);
-		Mat keygame_frame = outputImage * 0.7;
+		flip(frame, frame, 1);
 
-		drawRectangle(keygame_frame, sliderL);
-		drawRectangle(keygame_frame, sliderR);
+		drawRectangle(frame, sliderL);
+		drawRectangle(frame, sliderR);
 
 
 		map<int /*id*/, vector<Point2f> /*corners*/> values;
@@ -183,8 +130,10 @@ int main() {
 			ball.x_speed *= -1;
 		}
 
-		if (ball.y <= ball.size || ball.y >= frame.size().height - ball.size)
-			ball.y_speed *= -1; // ak je lopta na vrchu/spodu okna, odrazi sa
+		// ak je lopta na vrchu/spodu okna, odrazi sa
+		if (ball.y <= ball.size || ball.y >= frame.size().height - ball.size) {
+			ball.y_speed *= -1; 
+		}
 
 		if (ball.x <= ball.size || ball.x >= frame.size().width - ball.size) {
 			loses++;
@@ -194,18 +143,15 @@ int main() {
 		ball.x += ball.x_speed; // moze to pricitat aj odcitat
 		ball.y += ball.y_speed; // aj tu, kvoli tomu tam nie je ++
 
-		circle(keygame_frame, Point(ball.x, ball.y), ball.size, Scalar(0, 255, 0), -1, 8, 0);
+		circle(frame, Point(ball.x, ball.y), ball.size, Scalar(0, 255, 0), -1, 8, 0);
 
-		//putText(keygame_frame, "ball x speed: " + to_string(ball.x_speed), Point(5, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
-		//putText(keygame_frame, "ball y speed: " + to_string(ball.y_speed), Point(5, 60), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
-		putText(keygame_frame, "Loses: " + to_string(loses), Point(5, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
-
-		//flip(keygame_frame, keygame_frame, 1);
-		imshow("keygame", keygame_frame);
-
+		putText(frame, "Loses: " + to_string(loses), Point(5, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
+		
+		imshow("GAME", frame);
 
 		int pressed_key = waitKey(1);
 
+		/*
 		switch (pressed_key) {
 		case 27: //escape key
 			return 0; // exit program
@@ -225,6 +171,7 @@ int main() {
 		default:
 			break;
 		}
+		*/
 	}
 
 
