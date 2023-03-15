@@ -6,7 +6,8 @@
 using namespace cv;
 using namespace std;
 
-const int WIN_SIZE = 600;
+//const int WIN_SIZE = 600;
+const int SPEED = 20;
 
 struct Object
 {
@@ -14,23 +15,55 @@ struct Object
 	int y;
 };
 
-struct Ball
+struct Slider
 {
 	int x;
 	int y;
-	int size;
-	int x_speed;
-	int y_speed;
+	int width = 20;
+	int height = 200;
+	Scalar color{ 255,0,0 };
 };
 
-Ball createBall()
+struct Ball
+{
+	double x;
+	double y;
+	int size;
+	double x_speed;
+	double y_speed;
+};
+
+double degToRad(double deg)
+{
+	return deg / 180 * CV_PI;
+}
+
+void drawRectangle(Mat& frame, const Slider& slider)
+{
+	rectangle(frame, Point(slider.x - slider.width / 2, slider.y - slider.height / 2), Point(slider.x + slider.width / 2, slider.y + slider.height / 2), slider.color, -1);
+}
+
+cv::Point2f getCenter(const std::vector<cv::Point2f>& points)
+{
+	cv::Point2f sum;
+	for (auto& p: points)
+	{
+		sum += p;
+	}
+	return sum / (int)points.size();
+}
+
+Ball createBall(cv::Point2f position)
 {
 	Ball ball;
 	ball.size = 10;
-	ball.x = rand() % (WIN_SIZE - 2*ball.size + 1) + ball.size;
-	ball.y = rand() % (WIN_SIZE - 2*ball.size + 1) + ball.size;
-	ball.x_speed = 1 + rand() % 11; //nahodna zmena x o cislo od 1 do 10
-	ball.y_speed = 1 + rand() % 11;
+	ball.x = position.x;
+	ball.y = position.y;
+
+	double angle = (rand() % 900 - 450) /10;
+
+	ball.x_speed = cos(degToRad(angle)) * SPEED;
+	ball.y_speed = sin(degToRad(angle)) * SPEED;
 	return ball;
 }
 
@@ -91,36 +124,83 @@ int main() {
 
 	namedWindow("keygame", WINDOW_KEEPRATIO);
 
-	Object sliderL{ 10, WIN_SIZE / 2 };
-	Object sliderR{ WIN_SIZE - 10, WIN_SIZE / 2 };
+	cv::Size res{ 1280, 720 };
 
-	Ball ball = createBall();
+	Ball ball = createBall(cv::Point2f(res.width, res.height));
+
+	Slider sliderL{ 10, res.height / 2 };
+	Slider sliderR{ res.width - 10, res.height / 2 };
 
 	int loses = 0;
 
+	VideoCapture cam(0);
+	cam.set(CAP_PROP_FRAME_WIDTH, 1280);
+	cam.set(CAP_PROP_FRAME_HEIGHT, 720);
+
 	while (true) {
-		Mat keygame_frame = Mat::zeros(WIN_SIZE, WIN_SIZE, CV_8UC3);
 
-		rectangle(keygame_frame, Point(sliderL.x - 10, sliderL.y - 100), Point(sliderL.x + 10, sliderL.y + 100), Scalar(255, 0, 0), -1);
-		rectangle(keygame_frame, Point(sliderR.x - 10, sliderR.y - 100), Point(sliderR.x + 10, sliderR.y + 100), Scalar(255, 0, 0), -1);
+		cv::Mat frame;
+		cam >> frame;
 
-		if (ball.x <= sliderL.x + 20 && (ball.y >= sliderL.y - 100 && ball.y <= sliderL.y + 100)) ball.x_speed *= -1;
-		if (ball.x >= sliderR.x - 20 && (ball.y >= sliderR.y - 100 && ball.y <= sliderR.y + 100)) ball.x_speed *= -1;
-		if (ball.y <= ball.size || ball.y >= WIN_SIZE - ball.size) ball.y_speed *= -1; // ak je lopta na vrchu/spodu okna, odrazi sa
-		if (ball.x <= ball.size || ball.x >= WIN_SIZE - ball.size) {
+		std::vector<int> markerIds;
+		std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
+		cv::aruco::DetectorParameters detectorParams = cv::aruco::DetectorParameters();
+		cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_100);
+		cv::aruco::ArucoDetector detector(dictionary, detectorParams);
+		detector.detectMarkers(frame, markerCorners, markerIds, rejectedCandidates);
+
+		cv::Mat outputImage = frame.clone();
+		cv::aruco::drawDetectedMarkers(outputImage, markerCorners, markerIds);
+		cv::flip(outputImage, outputImage, 1);
+		imshow("cam", outputImage);
+
+		//Mat keygame_frame = Mat::zeros(WIN_SIZE, WIN_SIZE, CV_8UC3);
+		Mat keygame_frame = outputImage * 0.7;
+
+		drawRectangle(keygame_frame, sliderL);
+		drawRectangle(keygame_frame, sliderR);
+
+
+		std::map<int /*id*/, std::vector<cv::Point2f> /*corners*/> values;
+		for (size_t i = 0; i < markerCorners.size(); i++)
+		{
+			values[markerIds[i]] = markerCorners[i];
+		}
+
+		if (values.find(39) != values.end())
+		{
+			sliderL.y = values[39][0].y;
+		}
+
+		if (values.find(77) != values.end())
+		{
+			sliderR.y = values[77][0].y;
+		}
+
+
+		if (ball.x <= (sliderL.x + 20) && (ball.y >= sliderL.y - 100 && ball.y <= sliderL.y + 100) ||
+			ball.x >= (sliderR.x - 20) && (ball.y >= sliderR.y - 100 && ball.y <= sliderR.y + 100)) {
+			ball.x_speed *= -1;
+		}
+
+		if (ball.y <= ball.size || ball.y >= frame.size().height - ball.size)
+			ball.y_speed *= -1; // ak je lopta na vrchu/spodu okna, odrazi sa
+
+		if (ball.x <= ball.size || ball.x >= frame.size().width - ball.size) {
 			loses++;
-			ball = createBall();
+			ball = createBall({ 1280 / 2, 720 / 2 });
 		}
 
 		ball.x += ball.x_speed; // moze to pricitat aj odcitat
 		ball.y += ball.y_speed; // aj tu, kvoli tomu tam nie je ++
 
-		circle(keygame_frame, Point(ball.x, ball.y), ball.size, Scalar(0, 255, 0), 1, 8, 0);
+		circle(keygame_frame, Point(ball.x, ball.y), ball.size, Scalar(0, 255, 0), -1, 8, 0);
 
 		putText(keygame_frame, "ball x speed: " + to_string(ball.x_speed), Point(5, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
 		putText(keygame_frame, "ball y speed: " + to_string(ball.y_speed), Point(5, 60), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
 		putText(keygame_frame, "Loses: " + to_string(loses), Point(5, 90), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
 
+		//cv::flip(keygame_frame, keygame_frame, 1);
 		imshow("keygame", keygame_frame);
 
 
