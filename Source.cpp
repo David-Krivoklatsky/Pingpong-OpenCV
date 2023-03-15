@@ -149,9 +149,11 @@ int main() {
 		
 		imshow("GAME", frame);
 
-		int pressed_key = waitKey(1);
+		waitKey(1);
 
 		/*
+		int pressed_key = waitKey(1);
+
 		switch (pressed_key) {
 		case 27: //escape key
 			return 0; // exit program
