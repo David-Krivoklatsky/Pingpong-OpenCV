@@ -43,9 +43,9 @@ void drawRectangle(Mat& frame, const Slider& slider)
 	rectangle(frame, Point(slider.x - slider.width / 2, slider.y - slider.height / 2), Point(slider.x + slider.width / 2, slider.y + slider.height / 2), slider.color, -1);
 }
 
-cv::Point2f getCenter(const std::vector<cv::Point2f>& points)
+Point2f getCenter(const vector<Point2f>& points)
 {
-	cv::Point2f sum;
+	Point2f sum;
 	for (auto& p: points)
 	{
 		sum += p;
@@ -53,7 +53,7 @@ cv::Point2f getCenter(const std::vector<cv::Point2f>& points)
 	return sum / (int)points.size();
 }
 
-Ball createBall(cv::Point2f position)
+Ball createBall(Point2f position)
 {
 	Ball ball;
 	ball.size = 10;
@@ -94,7 +94,7 @@ int main() {
 		
 		// Draw a bounding box around each detected face
 		
-		for (const cv::Rect& tvar : tvare) {
+		for (const Rect& tvar : tvare) {
 			rectangle(frame, tvar, Scalar(0, 255, 0), 2);
 		}
 		//for (size_t i = 0; i < tvare.size(); i++) {
@@ -124,9 +124,9 @@ int main() {
 
 	namedWindow("keygame", WINDOW_KEEPRATIO);
 
-	cv::Size res{ 1280, 720 };
+	Size res{ 1280, 720 };
 
-	Ball ball = createBall(cv::Point2f(res.width, res.height));
+	Ball ball = createBall(Point2f(res.width, res.height));
 
 	Slider sliderL{ 10, res.height / 2 };
 	Slider sliderR{ res.width - 10, res.height / 2 };
@@ -139,19 +139,19 @@ int main() {
 
 	while (true) {
 
-		cv::Mat frame;
+		Mat frame;
 		cam >> frame;
 
-		std::vector<int> markerIds;
-		std::vector<std::vector<cv::Point2f>> markerCorners, rejectedCandidates;
-		cv::aruco::DetectorParameters detectorParams = cv::aruco::DetectorParameters();
-		cv::aruco::Dictionary dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_100);
-		cv::aruco::ArucoDetector detector(dictionary, detectorParams);
+		vector<int> markerIds;
+		vector<vector<Point2f>> markerCorners, rejectedCandidates;
+		aruco::DetectorParameters detectorParams = aruco::DetectorParameters();
+		aruco::Dictionary dictionary = aruco::getPredefinedDictionary(aruco::DICT_6X6_100);
+		aruco::ArucoDetector detector(dictionary, detectorParams);
 		detector.detectMarkers(frame, markerCorners, markerIds, rejectedCandidates);
 
-		cv::Mat outputImage = frame.clone();
-		cv::aruco::drawDetectedMarkers(outputImage, markerCorners, markerIds);
-		cv::flip(outputImage, outputImage, 1);
+		Mat outputImage = frame.clone();
+		aruco::drawDetectedMarkers(outputImage, markerCorners, markerIds);
+		flip(outputImage, outputImage, 1);
 		imshow("cam", outputImage);
 
 		//Mat keygame_frame = Mat::zeros(WIN_SIZE, WIN_SIZE, CV_8UC3);
@@ -161,7 +161,7 @@ int main() {
 		drawRectangle(keygame_frame, sliderR);
 
 
-		std::map<int /*id*/, std::vector<cv::Point2f> /*corners*/> values;
+		map<int /*id*/, vector<Point2f> /*corners*/> values;
 		for (size_t i = 0; i < markerCorners.size(); i++)
 		{
 			values[markerIds[i]] = markerCorners[i];
@@ -196,11 +196,11 @@ int main() {
 
 		circle(keygame_frame, Point(ball.x, ball.y), ball.size, Scalar(0, 255, 0), -1, 8, 0);
 
-		putText(keygame_frame, "ball x speed: " + to_string(ball.x_speed), Point(5, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
-		putText(keygame_frame, "ball y speed: " + to_string(ball.y_speed), Point(5, 60), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
-		putText(keygame_frame, "Loses: " + to_string(loses), Point(5, 90), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
+		//putText(keygame_frame, "ball x speed: " + to_string(ball.x_speed), Point(5, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
+		//putText(keygame_frame, "ball y speed: " + to_string(ball.y_speed), Point(5, 60), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
+		putText(keygame_frame, "Loses: " + to_string(loses), Point(5, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
 
-		//cv::flip(keygame_frame, keygame_frame, 1);
+		//flip(keygame_frame, keygame_frame, 1);
 		imshow("keygame", keygame_frame);
 
 
