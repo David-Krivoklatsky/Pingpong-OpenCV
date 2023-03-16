@@ -149,6 +149,7 @@ int main() {
 		
 		imshow("GAME", frame);
 
+		//ked to tu nie je tak to nefunguje
 		waitKey(1);
 
 		/*
@@ -175,7 +176,5 @@ int main() {
 		}
 		*/
 	}
-
-
 	return 0;
 }
