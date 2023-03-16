@@ -178,3 +178,13 @@ int main() {
 	}
 	return 0;
 }
+
+	/*
+	»o pridaù:
+
+	- SK”RE
+	- Rozdielne odr·ûanie v z·vislosti od miesta odrazu
+	- Moûnosù vybraù si medzi ovl·danÌm pomocou ARUCO alebo öÌpkami
+	- HudbiËku
+
+	*/
