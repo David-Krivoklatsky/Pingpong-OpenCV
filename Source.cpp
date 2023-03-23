@@ -1,5 +1,6 @@
 #include <iostream>
 #include <ctime>				//pre random Ëisla generovane na zaklade Ëasu
+#include <deque>
 
 #include <opencv2/opencv.hpp>
 
@@ -7,13 +8,13 @@ using namespace cv;
 using namespace std;
 
 //const int WIN_SIZE = 600;
-const int SPEED = 20;
+const int SPEED = 10;
+//const int FRAME_REUSE_COUNT = 2;
+const int FPS = 120;
 
-struct Object
-{
-	int x;
-	int y;
-};
+deque<Mat> frameQueue;
+mutex frameMutex;
+bool stopCapThread = false;
 
 struct Slider
 {
@@ -28,7 +29,7 @@ struct Ball
 {
 	double x;
 	double y;
-	int size;
+	int radius;
 	double x_speed;
 	double y_speed;
 };
@@ -38,7 +39,7 @@ double degToRad(double deg)
 	return deg / 180 * CV_PI;
 }
 
-void drawRectangle(Mat& frame, const Slider& slider)
+void drawSlider(Mat& frame, const Slider& slider)
 {
 	rectangle(frame, Point(slider.x - slider.width / 2, slider.y - slider.height / 2), Point(slider.x + slider.width / 2, slider.y + slider.height / 2), slider.color, -1);
 }
@@ -56,7 +57,7 @@ Point2f getCenter(const vector<Point2f>& points)
 Ball createBall(Point2f position)
 {
 	Ball ball;
-	ball.size = 10;
+	ball.radius = 10;
 	ball.x = position.x;
 	ball.y = position.y;
 
@@ -65,6 +66,36 @@ Ball createBall(Point2f position)
 	ball.x_speed = cos(degToRad(angle)) * SPEED;
 	ball.y_speed = sin(degToRad(angle)) * SPEED;
 	return ball;
+}
+
+void camCaptureThread(VideoCapture& cam)
+{
+	while (!stopCapThread)
+	{
+		Mat frame;
+		cam >> frame;
+
+		lock_guard<mutex> lk(frameMutex);
+		frameQueue.push_back(frame);
+
+		const int MAX_QUEUE_SIZE = 5;
+		if (frameQueue.size() > MAX_QUEUE_SIZE)
+			frameQueue.pop_front();
+	}
+}
+
+Mat getNewFrame()
+{
+	lock_guard<mutex> lk(frameMutex);
+
+	Mat frame;
+	if (!frameQueue.empty())
+	{
+		frame = frameQueue.front();
+		frameQueue.pop_front();
+	}
+
+	return frame;
 }
 
 int main() {
@@ -86,12 +117,24 @@ int main() {
 	cam.set(CAP_PROP_FRAME_HEIGHT, 720);
 
 	
-	int loses = 0;
+	int scoreL = 0, scoreR = 0;
 
+	
+
+	thread capThread(camCaptureThread, std::ref(cam));
+
+	
 	while (true) {
 
 		Mat frame;
-		cam >> frame;
+		Mat newFrame = getNewFrame();
+		if (!newFrame.empty())
+			frame = newFrame;
+
+		if (frame.empty()) {
+			this_thread::sleep_for(100ms);
+			continue;
+		}
 
 		vector<int> markerIds;
 		vector<vector<Point2f>> markerCorners, rejectedCandidates;
@@ -104,8 +147,8 @@ int main() {
 
 		flip(frame, frame, 1);
 
-		drawRectangle(frame, sliderL);
-		drawRectangle(frame, sliderR);
+		drawSlider(frame, sliderL);
+		drawSlider(frame, sliderR);
 
 
 		map<int /*id*/, vector<Point2f> /*corners*/> values;
@@ -124,33 +167,42 @@ int main() {
 			sliderR.y = values[77][0].y;
 		}
 
-
-		if (ball.x <= (sliderL.x + 20) && (ball.y >= sliderL.y - 100 && ball.y <= sliderL.y + 100) ||
-			ball.x >= (sliderR.x - 20) && (ball.y >= sliderR.y - 100 && ball.y <= sliderR.y + 100)) {
-			ball.x_speed *= -1;
-		}
-
 		// ak je lopta na vrchu/spodu okna, odrazi sa
-		if (ball.y <= ball.size || ball.y >= frame.size().height - ball.size) {
+		if (ball.y <= ball.radius || ball.y >= frame.size().height - ball.radius) {
 			ball.y_speed *= -1; 
 		}
 
-		if (ball.x <= ball.size || ball.x >= frame.size().width - ball.size) {
-			loses++;
+		//zmenit tak aby to pocitalo s kruhom a nie kde je x a y, chapes
+		if (ball.x <= (sliderL.x + sliderL.width / 2 + ball.radius) && (ball.y >= sliderL.y - sliderL.height / 2 && ball.y <= sliderL.y + sliderL.height / 2) ||
+			ball.x >= (sliderR.x - sliderR.width / 2 - ball.radius) && (ball.y >= sliderR.y - sliderR.height / 2 && ball.y <= sliderR.y + sliderL.height / 2)) {
+			ball.x_speed *= -1;
+		}
+
+
+
+		if (ball.x <= ball.radius) {
+			scoreR++;
+			ball = createBall({ 1280 / 2, 720 / 2 });
+		}
+		if (ball.x >= frame.size().width - ball.radius) {
+			scoreL++;
 			ball = createBall({ 1280 / 2, 720 / 2 });
 		}
 
 		ball.x += ball.x_speed; // moze to pricitat aj odcitat
 		ball.y += ball.y_speed; // aj tu, kvoli tomu tam nie je ++
 
-		circle(frame, Point(ball.x, ball.y), ball.size, Scalar(0, 255, 0), -1, 8, 0);
+		circle(frame, Point(ball.x, ball.y), ball.radius, Scalar(0, 255, 0), -1, 8, 0);
 
-		putText(frame, "Loses: " + to_string(loses), Point(5, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
+		//skÛre
+		putText(frame, to_string(scoreL) + " " + to_string(scoreR), Point(1280 / 2, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
 		
 		imshow("GAME", frame);
 
-		//ked to tu nie je tak to nefunguje
-		waitKey(1);
+		int key = waitKey(1);
+		if (key == 27) {
+			break;
+		}
 
 		/*
 		int pressed_key = waitKey(1);
@@ -175,14 +227,22 @@ int main() {
 			break;
 		}
 		*/
+
+		//this_thread::sleep_for(chrono::milliseconds(1000 / FPS));
 	}
+
+	stopCapThread = true;
+	capThread.join();
+
 	return 0;
 }
 
 	/*
 	»o pridaù:
 
+	- zmeniù odraûanie tak aby sa to odrazilo aj na rohu
 	- SK”RE
+	- Vybraù si kÛd ARUCO kodu
 	- Rozdielne odr·ûanie v z·vislosti od miesta odrazu
 	- Moûnosù vybraù si medzi ovl·danÌm pomocou ARUCO alebo öÌpkami
 	- HudbiËku
