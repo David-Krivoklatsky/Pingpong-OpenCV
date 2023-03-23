@@ -7,10 +7,10 @@
 using namespace cv;
 using namespace std;
 
-//const int WIN_SIZE = 600;
 const int SPEED = 10;
-//const int FRAME_REUSE_COUNT = 2;
 const int FPS = 120;
+//const int WIN_SIZE = 600;
+//const int FRAME_REUSE_COUNT = 2;
 
 deque<Mat> frameQueue;
 mutex frameMutex;
@@ -119,7 +119,6 @@ int main() {
 	
 	int scoreL = 0, scoreR = 0;
 
-	
 
 	thread capThread(camCaptureThread, std::ref(cam));
 
@@ -244,6 +243,7 @@ int main() {
 	- SK”RE
 	- Vybraù si kÛd ARUCO kodu
 	- Rozdielne odr·ûanie v z·vislosti od miesta odrazu
+	- moûnosù vybraù si kameru
 	- Moûnosù vybraù si medzi ovl·danÌm pomocou ARUCO alebo öÌpkami
 	- HudbiËku
 
