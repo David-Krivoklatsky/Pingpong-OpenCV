@@ -27,19 +27,8 @@ public:
 	~Game();
 
 	void setFrame(const cv::Mat& frame);
-
-	void setSliderL(int position)
-	{
-		std::lock_guard<std::mutex> lk(sliderMutex);
-		sliderL.y = position;
-	}
-
-	void setSliderR(int position)
-	{
-		std::lock_guard<std::mutex> lk(sliderMutex);
-		sliderR.y = position;
-	}
-
+	void setSliderL(int position);
+	void setSliderR(int position);
 	bool isRunning() const { return !stopRenderThread; }
 
 private:
@@ -59,7 +48,7 @@ private:
 	Slider sliderR;
 	std::mutex sliderMutex;
 
-	cv::Mat renderFrame;
+	cv::Mat renderFrame = cv::Mat::zeros(resolution, CV_8UC3);
 	std::mutex frameMutex;
 	bool stopRenderThread = false;
 	std::thread renderThread;

@@ -26,7 +26,6 @@ Game::Game(int speed, int fps, Size resolution)
 	, ball(createBall(Point2f(resolution.width, resolution.height) / 2))
 	, sliderL{ 10, resolution.height / 2 }
 	, sliderR{ resolution.width - 10, resolution.height / 2 }
-	, renderFrame(Mat::zeros(resolution, CV_8UC3))
 {
 	// Spustime thread kde bude bezat hra
 	renderThread = std::thread(&Game::gameLoop, this);
@@ -36,14 +35,25 @@ Game::~Game()
 {
 	// Zastavime thread kde bezi hra
 	stopRenderThread = true;
-	if (renderThread.joinable())
-		renderThread.join();
+	renderThread.join();
 }
 
 void Game::setFrame(const Mat& frame)
 {
 	lock_guard<mutex> lk(frameMutex);
 	renderFrame = frame;
+}
+
+void Game::setSliderL(int position)
+{
+	std::lock_guard<std::mutex> lk(sliderMutex);
+	sliderL.y = position;
+}
+
+void Game::setSliderR(int position)
+{
+	std::lock_guard<std::mutex> lk(sliderMutex);
+	sliderR.y = position;
 }
 
 void Game::gameLoop()

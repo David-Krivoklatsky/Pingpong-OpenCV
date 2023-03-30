@@ -28,7 +28,7 @@ map<int, vector<Point2f>> detectArucos(const Mat& frame)
 
 int main()
 {
-	VideoCapture cam(1);
+	VideoCapture cam(0);
 
 	if (!cam.isOpened())
 		return 1;
